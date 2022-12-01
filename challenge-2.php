@@ -5,14 +5,26 @@
  * Each line is a new food item for that Elf - the value is always an integer.
  * A blank line separates the data for each elf.
  *
- * This script scans the input data and finds the elf with the highest number of calories
- * and reports back the Elf number and total calories for that Elf.
+ * This script scans the input data and calculates the total calories consumed for each Elf.
+ * The result for each elf is returned in an array.
+ *
+ * We then sort the array (in ascending order, such that the items at the end
+ * represent the Elves with the highest calories), and pop 3 items off the end of the array
+ * and add those calories together to get the total calories for those Elves.
  *
  * Not over engineering this - keeping the logic simple and straight to the point.
  */
 try {
-    [$elfNo, $highestElfCalories] = findHighestElfCalories();
-    print "The elf with the highest calories was elf number $elfNo, with $highestElfCalories calories.\n";
+    $totalCaloriesForEachElf = findTotalCaloriesForEachElf();
+    sort($totalCaloriesForEachElf, SORT_NUMERIC);
+
+    $topThreeCalories = 0;
+    for ($counter = 0; $counter < 3; $counter++) {
+        $topThreeCalories += array_pop($totalCaloriesForEachElf);
+    }
+
+    print "The total calories for the top 3 elves is: $topThreeCalories\n";
+
 } catch (Exception $exception) {
     print "Caught exception whilst processing data: {$exception->getMessage()}\n";
 }
@@ -20,35 +32,26 @@ try {
 
 /**
  * Reads the input file line by line, adding the total number of calories
- * together and keeping a track of which Elf number we're up to.
- * When a new line is encountered, we reset the calorie counter and increment
- * the Elf counter.
+ * together for each elf. The total for each elf is appended to an array, which
+ * is then returned.
  * @return int[]
  * @throws Exception
  */
-function findHighestElfCalories(): array
+function findTotalCaloriesForEachElf(): array
 {
     $fp = fopen('data.txt', 'r');
     if ($fp === false) {
         throw new Exception('Unable to load elf calorie data');
     }
 
-    $elfNo = 1;
-    $elfNoWithHighestCalories = 0;
-
-    $highestElfCalories = 0;
+    $elfTotalCalories = [];
     $totalElfCalories = 0;
 
     while ($line = fgets($fp)) {
         $line = trim($line);
         if (empty($line)) {
-            if ($totalElfCalories > $highestElfCalories) {
-                $highestElfCalories = $totalElfCalories;
-                $elfNoWithHighestCalories = $elfNo;
-            }
-
+            $elfTotalCalories[] = $totalElfCalories;
             $totalElfCalories = 0;
-            $elfNo++;
             continue;
         }
 
@@ -57,5 +60,5 @@ function findHighestElfCalories(): array
 
     fclose($fp);
 
-    return [$elfNoWithHighestCalories, $highestElfCalories];
+    return $elfTotalCalories;
 }
