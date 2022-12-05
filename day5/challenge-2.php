@@ -29,9 +29,7 @@ function executeInstructions(StackManager $stackManager): void
         $moveFrom = (int)$matches[0][2];
         $moveTo = (int)$matches[0][3];
 
-        for ($counter = 0; $counter < $moveQty; $counter++) {
-            $stackManager->move($moveFrom, $moveTo);
-        }
+        $stackManager->move($moveFrom, $moveTo, $moveQty);
     }
 
     fclose($fp);
@@ -125,24 +123,42 @@ class StackManager
         }
     }
 
-    public function move(int $stackFrom, int $stackTo): void
+    public function move(int $stackFrom, int $stackTo, int $qty): void
     {
         if (!isset($this->stacks[$stackFrom])) {
             throw new Exception('Invalid stack FROM number');
         }
 
-        if (empty($this->stacks[$stackFrom])) {
-            throw new Exception("Invalid instruction - stack $stackFrom is empty");
+        if (count($this->stacks[$stackFrom]) < $qty) {
+            throw new Exception("Invalid instruction - stack $stackFrom does not have $qty elements");
         }
 
         if (!isset($this->stacks[$stackTo])) {
             throw new Exception('Invalid stack TO number');
         }
 
-        $value = array_pop($this->stacks[$stackFrom]);
-        $this->stacks[$stackTo][] = $value;
+//        print "Moving $qty from $stackFrom to $stackTo\n";
+//        print_r($this->stacks[$stackFrom]);
+//        print_r($this->stacks[$stackTo]);
+//        print "-----------------\n";
 
-        //print "Moved $value from $stackFrom to $stackTo\n";
+        $values = [];
+        for ($counter = 0; $counter < $qty; $counter++) {
+            $values[] = array_pop($this->stacks[$stackFrom]);
+        }
+
+        if ($qty > 1) {
+            $values = array_reverse($values);
+        }
+
+        foreach ($values as $value) {
+            $this->stacks[$stackTo][] = $value;
+        }
+
+//        print_r($this->stacks[$stackFrom]);
+//        print_r($this->stacks[$stackTo]);
+//
+//        die("\nDONE");
     }
 
     public function printStackTops(): void
