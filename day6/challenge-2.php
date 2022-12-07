@@ -1,6 +1,6 @@
 <?php
 $input = file_get_contents('input.txt');
-//$input = 'bvwbjplbgvbhsrlpgdmjqwftvncz';
+//$input = 'bvwbjplbgvbhsrlpgdmjqwftvncz';  // 2265
 
 $signalStart = getSignalStartPosition($input);
 
