@@ -1,0 +1,20 @@
+{
+    "name": "andyc/aoc-day1-calories",
+    "require": {
+        "brick/math": "^0.10.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Andyc\\AocDay1Calories\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Andrew Chapman",
+            "email": "andy@andychapman.net"
+        }
+    ]
+}
