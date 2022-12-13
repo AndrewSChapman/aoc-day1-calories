@@ -1,8 +1,29 @@
 <?php
 $grid = getTopologyGrid();
 $grid->traverse();
-$grid->dumpGrid();
-$grid->printEndNumMoves();
+//$grid->dumpGrid();
+
+$allAs = $grid->getAllAPositions();
+$numAs = count($allAs);
+
+$bestNumEndMoves = 99999;
+
+
+foreach ($allAs as $aIdx => $aPosition) {
+    $perc = ($aIdx / $numAs) * 100;
+    print "Processing $aIdx of $numAs - $perc % - $bestNumEndMoves\n";
+    $grid = getTopologyGrid();
+    $grid->setStartTo($aPosition->getY(), $aPosition->getX());
+    //$grid->dumpGrid();
+    $grid->traverse();
+    $numEndMoves = $grid->getEndNumMoves();
+
+    if (($numEndMoves > 0) && ($numEndMoves < $bestNumEndMoves)) {
+        $bestNumEndMoves = $numEndMoves;
+    }
+}
+
+print "Best num end moves for an 'A' start pos is $bestNumEndMoves\n";
 
 class Position
 {
@@ -46,16 +67,19 @@ class GridCell
 
     public function canMoveToMe(string $letter): bool
     {
-        // We should never be moving from an 'E' to any other square since E is the END of traversal.
+        // A Start or End position can always move to this letter.
+        if ($letter === 'S') {
+            $letter = 'a';
+        }
+
         if ($letter === 'E') {
             throw new Exception('Current letter is E - probably should not be?');
         }
 
-        // The end letter E iz actually a 'z' - don't forget this.
         $thisLetter = $this->letter === 'E' ? 'z' : $this->letter;
 
-        // We can move to the letter if the difference is less than 2, e.g. a to b, a to a, or j to a.
         $diff = ord($thisLetter) - ord($letter);
+        //print "Current letter $letter, Target letter: {$thisLetter} - Diff: $diff\n";
 
         return $diff <= 1;
     }
@@ -96,9 +120,9 @@ class Grid
      * @throws Exception
      */
     public function __construct(
-        public readonly array $startCoords,
+        public array $startCoords,
         public readonly array $goalCoords,
-        public readonly array $grid,
+        public array $grid,
     ){
         if ((empty($grid)) || (!is_array($grid[0]))) {
             throw new Exception('Invalid grid');
@@ -133,7 +157,6 @@ class Grid
         $newX = $currentPosition->getX() - 1;
         $newY = $currentPosition->getY();
 
-        // Don't allow us to go out of bounds of the array (i.e. less than 0 values)
         if ($newX >= 0) {
             /** @var GridCell $gridCell */
             $targetGridCell = $this->getGridCell($newX, $newY);
@@ -144,7 +167,6 @@ class Grid
         $newX = $currentPosition->getX() + 1;
         $newY = $currentPosition->getY();
 
-        // Don't allow us to go out of bounds of the array (i.e. greater than the total number of columns)
         if ($newX < $this->numCols) {
             /** @var GridCell $gridCell */
             $targetGridCell = $this->getGridCell($newX, $newY);
@@ -155,7 +177,6 @@ class Grid
         $newX = $currentPosition->getX();
         $newY = $currentPosition->getY() - 1;
 
-        // Don't allow us to go out of bounds of the array (i.e. less than the total number of rows)
         if ($newY >= 0) {
             /** @var GridCell $gridCell */
             $targetGridCell = $this->getGridCell($newX, $newY);
@@ -166,7 +187,6 @@ class Grid
         $newX = $currentPosition->getX();
         $newY = $currentPosition->getY() + 1;
 
-        // Don't allow us to go out of bounds of the array (i.e. greater than the total number of rows)
         if ($newY < $this->numRows) {
             /** @var GridCell $gridCell */
             $targetGridCell = $this->getGridCell($newX, $newY);
@@ -174,10 +194,40 @@ class Grid
         }
     }
 
-    public function printEndNumMoves(): void
+    public function getEndNumMoves(): int
     {
         $gridCell = $this->getGridCell($this->goalCoords[1], $this->goalCoords[0]);
-        print "End cell reached in: {$gridCell->getNumMovesRequired()}\n";
+        return $gridCell->getNumMovesRequired();
+    }
+
+    public function setStartTo(int $y, int $x): void
+    {
+        $this->grid[$this->startCoords[0]][$this->startCoords[1]] = new GridCell('z');
+        $this->startCoords = [$y, $x];
+        $this->grid[$this->startCoords[0]][$this->startCoords[1]] = new GridCell('S');
+    }
+
+    /**
+     * @return Position[]
+     * @throws Exception
+     */
+    public function getAllAPositions(): array
+    {
+        $allAPositions = [];
+
+        foreach ($this->grid as $rowNo => $row) {
+            /**
+             * @var int $colNo
+             * @var GridCell $gridCell
+             */
+            foreach ($row as $colNo => $gridCell) {
+                if ($gridCell->letter === 'a') {
+                    $allAPositions[] = new Position($colNo, $rowNo);
+                }
+            }
+        }
+
+        return $allAPositions;
     }
 
     private function move(GridCell $currentGridCell, GridCell $targetGridCell, int $numMoves, Position $newPosition): void
@@ -185,6 +235,7 @@ class Grid
         if (!$targetGridCell->canMoveToMe($currentGridCell->letter)) {
             return;
         }
+
 
         $numMoves++;
 
@@ -236,7 +287,7 @@ class Grid
  */
 function getTopologyGrid(): Grid
 {
-    $fp = fopen('input-2.txt', 'r');
+    $fp = fopen('input.txt', 'r');
     if ($fp === false) {
         throw new Exception('Unable to load input data');
     }
