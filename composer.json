@@ -8,7 +8,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Andyc\\AocDay1Calories\\": "src/"
+            "Andyc\\AdventOfCode\\": "src/"
         }
     },
     "authors": [
