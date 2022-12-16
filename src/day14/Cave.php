@@ -5,7 +5,6 @@ namespace Andyc\AdventOfCode\day14;
 
 class Cave
 {
-    private int $currentStepNo = 0;
     private array $cave = [];
 
     /** @var Sand[] */
@@ -23,14 +22,10 @@ class Cave
 
     public function startSand(): void
     {
-        $this->currentStepNo++;
-
         // If there is no sand at all yet, add the first sand item.
         if (empty($this->sand)) {
             $this->sand[] = $this->getNewSandItem();
         }
-
-        $canMoveSand = true;
 
         while (true) {
             // Get the sand item at the top of the stack
@@ -41,23 +36,18 @@ class Cave
                 break;
             }
 
-            /**
-             * Can we move the sand straight down?  If so, do it.
-             */
-            $newPoint = $sand->goStraightDown();
-            if ($this->isPointValid($newPoint)) {
-                $sand->setNewLocation($newPoint);
-                print "Moved sand down\n";
-                echo $newPoint->dump();
-                continue;
-            }
+            try {
+                /**
+                 * Can we move the sand straight down?  If so, do it.
+                 */
+                $newPoint = $sand->goStraightDown();
+                if ($this->isPointValid($newPoint)) {
+                    $sand->setNewLocation($newPoint);
+                    print "Moved sand down\n";
+                    echo $newPoint->dump();
+                    continue;
+                }
 
-            /**
-             * Can we move the sand diagonally down left?  If so, do it.
-             * In order to go down left, we must first be able to go left.
-             */
-            $newPoint = $sand->goLeft();
-            if ($this->isPointValid($newPoint)) {
                 // Left is OK - now try diagonal left
                 $newPoint = $sand->goDownLeft();
                 if ($this->isPointValid($newPoint)) {
@@ -66,14 +56,7 @@ class Cave
                     echo $newPoint->dump();
                     continue;
                 }
-            }
 
-            /**
-             * Can we move the sand diagonally down right?  If so, do it.
-             * In order to go down left, we must first be able to go right.
-             */
-            $newPoint = $sand->goRight();
-            if ($this->isPointValid($newPoint)) {
                 $newPoint = $sand->goDownRight();
                 if ($this->isPointValid($newPoint)) {
                     $sand->setNewLocation($newPoint);
@@ -81,25 +64,22 @@ class Cave
                     echo $newPoint->dump();
                     continue;
                 }
-            }
 
-            // The sand is blocked
-            $sand->setIsBlocked();
-            $this->drawFinalSandPosition($sand->getPoint());
+                // The sand is blocked
+                $sand->setIsBlocked();
+                $this->drawFinalSandPosition($sand->getPoint());
 
-            if (count($this->sand) === 22) {
-                $this->drawCave();
-                die("STOP");
-            }
-
-            /*
-             * If the sand final Y pos is > 0, push a new sand item to
-             * the start of the array
-             */
-            if ($sand->getPoint()->y > 0) {
-                array_unshift($this->sand, $this->getNewSandItem());
-            } else {
-                // If we could not add more sand to the stack - we're done.
+                /*
+                 * If the sand final Y pos is > 0, push a new sand item to
+                 * the start of the array
+                 */
+                if ($sand->getPoint()->y > 0) {
+                    array_unshift($this->sand, $this->getNewSandItem());
+                } else {
+                    // If we could not add more sand to the stack - we're done.
+                    break;
+                }
+            } catch (\Exception $exception) {
                 break;
             }
         }
@@ -123,11 +103,11 @@ class Cave
         }
 
         if ($p->x < $minX) {
-            return false;
+            throw new \DomainException('SandOverflow');
         }
 
         if ($p->x > $maxX) {
-            return false;
+            throw new \DomainException('SandOverflow');
         }
 
         return $this->cave[$p->y][$p->x] === '.';
@@ -230,6 +210,19 @@ class Cave
         }
 
         $this->drawCave();
+    }
+
+    public function getNumSandUnits(): int
+    {
+        print "\n-------\n";
+
+        foreach ($this->sand as $sand) {
+            echo $sand->getPoint()->dump();
+        }
+
+        print "\n-------\n";
+
+        return count($this->sand);
     }
 
     public function drawCave(): void

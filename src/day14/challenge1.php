@@ -9,6 +9,10 @@ $lines = LineLoader::loadLines();
 
 $cave = new Cave($lines);
 $cave->startSand();
+
+$numSandUnits = $cave->getNumSandUnits();
+
 $cave->drawCave();
 
-print "OK";
+print "Num sand units: $numSandUnits\n";
+
